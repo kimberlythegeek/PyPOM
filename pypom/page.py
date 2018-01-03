@@ -90,6 +90,13 @@ class Page(WebView):
                            self.URL_TEMPLATE.format(**self.url_kwargs))
         return self.base_url
 
+    @property
+    def is_loaded(self):
+        if self.driver.execute_script('return document.readyState === "complete"') is True:
+            return True
+        else:
+            return False
+
     def open(self):
         """Open the page.
 
