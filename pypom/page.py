@@ -107,16 +107,34 @@ class Page(WebView):
         raise UsageError('Set a base URL or URL_TEMPLATE to open this page.')
 
     def wait_for_page_to_load(self):
-        """Wait for the page to load.
+        """
+        Wait for the page to load.
 
         By default the driver will try to wait for any page loads to be
-        complete, however it's not uncommon for it to return early. To address
-        this you can override :py:func:`wait_for_page_to_load` and implement an
-        explicit wait for a condition that evaluates to ``True`` when the page
-        has finished loading.
+        complete, however it's not uncommon for it to return early.
+
+        :py:func:`wait_for_page_to_load` is a template method. Do not override it.
+        Instead, use :py:func:`_before_wait_for_page_load` or :py:func:`_after_wait_for_page_load`
+        for pre- and post- actions.
+
+        Override :py:func:`_page_loaded` and implement a condition that
+        evaluates to ``True`` when the page has finished loading.
 
         :return: The current page object.
         :rtype: :py:class:`Page`
+        """
+        self._before_wait_for_page_load()
+        self.wait.until(lambda _: self._page_loaded)
+        self._after_wait_for_page_load()
+        return self
+
+    @property
+    def _page_loaded(self):
+        """Placeholder method to be overwritten with a condition
+        that evaluates to ``True`` when the page has finished loading.
+
+        :return: True once the page has finished loading.
+        :rtype: bool
 
         Usage (Selenium)::
 
@@ -125,9 +143,10 @@ class Page(WebView):
 
           class Mozilla(Page):
 
-              def wait_for_page_to_load(self):
+              @property
+              def _page_loaded(self):
                   body = self.find_element(By.TAG_NAME, 'body')
-                  self.wait.until(lambda s: 'loaded' in body.get_attribute('class'))
+                  return 'loaded' in body.get_attribute('class')
 
         Usage (Splinter)::
 
@@ -135,14 +154,17 @@ class Page(WebView):
 
           class Mozilla(Page):
 
-              def wait_for_page_to_load(self):
+              @property
+              def _page_loaded(self):
                   body = self.find_element('tag', 'body')
-                  self.wait.until(lambda s: 'loaded' in body['class']))
-
-        Examples::
-
-            # wait for the seed_url value to be in the current URL
-            self.wait.until(lambda s: self.seed_url in s.current_url)
-
+                  return 'loaded' in body['class']
         """
-        return self
+        return True
+
+    def _before_wait_for_page_load(self):
+        """Placeholder method for actions to be performed before a page loads."""
+        pass
+
+    def _after_wait_for_page_load(self):
+        """Placeholder method for actions to be performed after a page loads."""
+        pass
